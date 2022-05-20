@@ -18,8 +18,11 @@
 #include "MAX30105.h"
 #include "heartRate.h"
 
+/*** function turn offs, define to enable **/
+#define builtin_BeatDetect
+
 /**** Debug prints ***/
-#define PRINT_BPM_Data // write out data?
+#define PRINT_BPM_Data 
 // #define PRINT_graph 
 
 
@@ -32,6 +35,10 @@ static long lastBeat = 0; //Time at which the last beat occurred
 
 static float beatsPerMinute;
 static int beatAvg;
+
+// limit rate
+#define HRS_PrintPeriod    1 //[ms]
+static unsigned long lastHRSprint = 0;
 
 void HeartRateSensor_setup(void) {
 
@@ -56,39 +63,45 @@ void HeartRateSensor_inLoop() {
     // Serial.print(particleSensor.getRed());
     // Serial.print(", ");
     // Serial.print(particleSensor.getGreen());
+    Serial.println();
   #endif /* PRINT_graph */
 
-  if (checkForBeat(irValue) == true) {
-    //We sensed a beat!
-    long delta = millis() - lastBeat;
-    lastBeat = millis();
+  #ifdef builtin_BeatDetect
+    if (checkForBeat(irValue) == true) {
+      //We sensed a beat!
+      long delta = millis() - lastBeat;
+      lastBeat = millis();
+      Serial.println("Got a heartbeat!");
 
-    beatsPerMinute = 60 / (delta / 1000.0);
+      beatsPerMinute = 60 / (delta / 1000.0);
 
-    if (beatsPerMinute < 255 && beatsPerMinute > 20) {
-      rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
-      rateSpot %= RATE_SIZE; //Wrap variable
+      if (beatsPerMinute < 255 && beatsPerMinute > 20) {
+        rates[rateSpot++] = (byte)beatsPerMinute; //Store this reading in the array
+        rateSpot %= RATE_SIZE; //Wrap variable
 
-      //Take average of readings
-      beatAvg = 0;
-      for (byte x = 0 ; x < RATE_SIZE ; x++)
-        beatAvg += rates[x];
-      beatAvg /= RATE_SIZE;
+        //Take average of readings
+        beatAvg = 0;
+        for (byte x = 0 ; x < RATE_SIZE ; x++)
+          beatAvg += rates[x];
+        beatAvg /= RATE_SIZE;
+      }
     }
-  }
 
-  #ifdef PRINT_BPM_Data
+    if(HRS_PrintPeriod < (millis() - lastHRSprint)) {
+      #ifdef PRINT_BPM_Data
+        Serial.print("IR=");
+        Serial.print(irValue);
+        Serial.print(", BPM=");
+        Serial.print(beatsPerMinute);
+        Serial.print(", Avg BPM=");
+        Serial.println(beatAvg);
+      #endif /* PRINT_BPM_Data */
 
-  Serial.print("IR=");
-  Serial.print(irValue);
-  Serial.print(", BPM=");
-  Serial.print(beatsPerMinute);
-  Serial.print(", Avg BPM=");
-  Serial.print(beatAvg);
-  #endif /* PRINT_BPM_Data */
+      lastHRSprint = millis();
+    }
+  #endif /* builtin_BeatDetect */
 
   if (irValue < 50000)
-    Serial.print(" No finger?");
+    Serial.println(" No finger?");
 
-  Serial.println();
 }

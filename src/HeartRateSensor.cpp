@@ -18,6 +18,10 @@
 #include "MAX30105.h"
 #include "heartRate.h"
 
+/**** Debug prints ***/
+#define PRINT_BPM_Data // write out data?
+// #define PRINT_graph 
+
 
 static MAX30105 particleSensor;
 
@@ -32,18 +36,27 @@ static int beatAvg;
 void HeartRateSensor_setup(void) {
 
   // Initialize sensor
-  if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
+  while (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
     Serial.println("MAX30102 was not found. Please check wiring/power. ");
-    while (1);
+    // while (1);
   }
 
   particleSensor.setup(); //Configure sensor with default settings
   particleSensor.setPulseAmplitudeRed(0x0A); //Turn Red LED to low to indicate sensor is running
-  particleSensor.setPulseAmplitudeGreen(0); //Turn off Green LED
+  particleSensor.setPulseAmplitudeGreen(0x0A); //Turn off Green LED
 }
 
 void HeartRateSensor_inLoop() {
   long irValue = particleSensor.getIR();
+
+  #ifdef PRINT_graph
+    // Serial.print("IR,");
+    Serial.print(particleSensor.getIR());
+    // Serial.print(", ");
+    // Serial.print(particleSensor.getRed());
+    // Serial.print(", ");
+    // Serial.print(particleSensor.getGreen());
+  #endif /* PRINT_graph */
 
   if (checkForBeat(irValue) == true) {
     //We sensed a beat!
@@ -64,12 +77,15 @@ void HeartRateSensor_inLoop() {
     }
   }
 
+  #ifdef PRINT_BPM_Data
+
   Serial.print("IR=");
   Serial.print(irValue);
   Serial.print(", BPM=");
   Serial.print(beatsPerMinute);
   Serial.print(", Avg BPM=");
   Serial.print(beatAvg);
+  #endif /* PRINT_BPM_Data */
 
   if (irValue < 50000)
     Serial.print(" No finger?");

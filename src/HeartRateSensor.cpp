@@ -24,14 +24,25 @@
 /**** Debug prints ***/
 #define PRINT_BPM_Data 
 // #define PRINT_graph 
+// #define PRINT_HRV_debug
 
 
 static MAX30105 particleSensor;
 
+//track heart rate
 static const byte RATE_SIZE = 4; //Increase this for more averaging. 4 is good.
 static byte rates[RATE_SIZE]; //Array of heart rates
 static byte rateSpot = 0;
 static long lastBeat = 0; //Time at which the last beat occurred
+
+// track heart rate variability
+static const uint8_t NUM_HRV_SAMPLES = 4;
+static const unsigned long MAX_HRV_INTERVAL = 200; // what's the biggest reasonable value?
+static uint8_t HRV_index = 0; // where in array to save
+static float RMSSD = 0.0; // HRV calcuation
+static unsigned long HRintervals[NUM_HRV_SAMPLES]; // array of heart rate intervals
+static unsigned long interval = 0; // HRV interval cal
+
 
 static float beatsPerMinute;
 static int beatAvg;
@@ -84,6 +95,21 @@ void HeartRateSensor_inLoop() {
         for (byte x = 0 ; x < RATE_SIZE ; x++)
           beatAvg += rates[x];
         beatAvg /= RATE_SIZE;
+
+        // calculate HRV
+        HRintervals[HRV_index++] = delta; // store interval for HRV calcs
+        HRV_index %= NUM_HRV_SAMPLES; // wrap variable
+        RMSSD = 0.0; //clear for each round
+        for (int ind = 0; ind < NUM_HRV_SAMPLES; ind++) {
+          // i+1 - i => (i+size-1) %size - i
+          interval = (HRintervals[(ind+NUM_HRV_SAMPLES-1) % NUM_HRV_SAMPLES] 
+                    - HRintervals[ind]);
+          #ifdef PRINT_HRV_debug
+            Serial.println(interval);
+          #endif /* PRINT_HRV_debug */
+          RMSSD = (float) interval*interval; // square it as we enter
+        }
+        RMSSD = sqrt(RMSSD/NUM_HRV_SAMPLES); // calcute RMS part
       }
     }
 
@@ -94,7 +120,11 @@ void HeartRateSensor_inLoop() {
         Serial.print(", BPM=");
         Serial.print(beatsPerMinute);
         Serial.print(", Avg BPM=");
-        Serial.println(beatAvg);
+        Serial.print(beatAvg);
+        Serial.print(", HRV: ");
+        Serial.print(RMSSD);
+
+        Serial.println();
       #endif /* PRINT_BPM_Data */
 
       lastHRSprint = millis();
@@ -105,3 +135,4 @@ void HeartRateSensor_inLoop() {
     Serial.println(" No finger?");
 
 }
+

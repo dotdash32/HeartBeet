@@ -36,12 +36,13 @@ static byte rateSpot = 0;
 static long lastBeat = 0; //Time at which the last beat occurred
 
 // track heart rate variability
-static const uint8_t NUM_HRV_SAMPLES = 4;
+static const uint8_t NUM_HRV_SAMPLES = 10;
 static const unsigned long MAX_HRV_INTERVAL = 200; // what's the biggest reasonable value?
 static uint8_t HRV_index = 0; // where in array to save
 static float RMSSD = 0.0; // HRV calcuation
-static unsigned long HRintervals[NUM_HRV_SAMPLES]; // array of heart rate intervals
-static unsigned long interval = 0; // HRV interval cal
+static int16_t HRintervals[NUM_HRV_SAMPLES]; // array of heart rate intervals
+static int16_t lastDelta = 0; // last HRV delta
+static int16_t interval = 0; // HRV interval cal
 
 
 static float beatsPerMinute;
@@ -60,8 +61,6 @@ void HeartRateSensor_setup(void) {
   }
 
   particleSensor.setup(); //Configure sensor with default settings
-  particleSensor.setPulseAmplitudeRed(0x0A); //Turn Red LED to low to indicate sensor is running
-  particleSensor.setPulseAmplitudeGreen(0x0A); //Turn off Green LED
 }
 
 void HeartRateSensor_inLoop() {
@@ -97,19 +96,28 @@ void HeartRateSensor_inLoop() {
         beatAvg /= RATE_SIZE;
 
         // calculate HRV
-        HRintervals[HRV_index++] = delta; // store interval for HRV calcs
-        HRV_index %= NUM_HRV_SAMPLES; // wrap variable
-        RMSSD = 0.0; //clear for each round
-        for (int ind = 0; ind < NUM_HRV_SAMPLES; ind++) {
-          // i+1 - i => (i+size-1) %size - i
-          interval = (HRintervals[(ind+NUM_HRV_SAMPLES-1) % NUM_HRV_SAMPLES] 
-                    - HRintervals[ind]);
+        // check intervanl is reasonable
+
+        interval = delta - lastDelta; // what's our value?
+        lastDelta = delta; //update for next loop
+        #ifdef PRINT_HRV_debug
+          Serial.print("pre-check interval: ");
+          Serial.println(interval);
+        #endif /* PRINT_HRV_debug */
+        if (MAX_HRV_INTERVAL > abs(interval)) {
+          HRintervals[HRV_index++] = interval; // store interval for HRV calcs
+          HRV_index %= NUM_HRV_SAMPLES; // wrap variable
+          RMSSD = 0.0; //clear for each round
+          for (int ind = 0; ind < NUM_HRV_SAMPLES; ind++) {
+            // i+1 - i => (i+size-1) %size - i
+            RMSSD = (float) interval*interval; // square it as we enter
+          }
+          RMSSD = sqrt(RMSSD/NUM_HRV_SAMPLES); // calcute RMS part
           #ifdef PRINT_HRV_debug
-            Serial.println(interval);
+            Serial.println(RMSSD);
           #endif /* PRINT_HRV_debug */
-          RMSSD = (float) interval*interval; // square it as we enter
         }
-        RMSSD = sqrt(RMSSD/NUM_HRV_SAMPLES); // calcute RMS part
+
       }
     }
 

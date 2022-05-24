@@ -14,33 +14,39 @@
 
 // private functions
 void setPwmFrequency(int pin, int divisor);
+bool continueHeartbeatVibe(void *opaque);
 
 // module level variables
 static int pwmPin_A = 3; // PWM output pin for motor 1
 static int pwmPin_B = 5; // PWM output pin for motor 2
-enum HBstep_t {waiting, s1, between, s2, after};
+enum HBstep_t {
+  waiting, s1, between, s2, after
+  };
 static HBstep_t HBstate = waiting;
 static float thisHeartbeatTime = 0; // [ms]
-Timer<> tmr;
+
+auto timer = timer_create_default();
+
 
 bool setupVibeMotors(void)
 {
-    setPwmFrequency(pwmPin_A, 1);
-    setPwmFrequency(pwmPin_B, 1);
+    // setPwmFrequency(pwmPin_A, 1);
+    // setPwmFrequency(pwmPin_B, 1);
 
     pinMode(pwmPin_A, OUTPUT);
     pinMode(pwmPin_B, OUTPUT); 
 
     analogWrite(pwmPin_A, 0);    
-    analogWrite(pwmPin_B, 0);    
+    analogWrite(pwmPin_B, 0);  
+
+    return true;  
 }
 
-bool startHeartbeatVibe(Timer<> timer, float commandedHeartbeatTime)
+bool startHeartbeatVibe(float commandedHeartbeatTime)
 {
     bool returnVal = true; 
 
     // store timer object and heartbeattime in module for use with continueHeartbeatVibe later
-    tmr = timer;
     thisHeartbeatTime = commandedHeartbeatTime;
 
     // if not already sending a beat
@@ -51,7 +57,7 @@ bool startHeartbeatVibe(Timer<> timer, float commandedHeartbeatTime)
         analogWrite(pwmPin_B, S1_AMPLITUDE);
 
         // start the timer
-        tmr.in(BETWEEN_TIME, continueHeartbeatVibe);
+        timer.in(BETWEEN_TIME*thisHeartbeatTime, continueHeartbeatVibe);
 
         // set state to S1
         HBstate = s1;
@@ -64,6 +70,14 @@ bool startHeartbeatVibe(Timer<> timer, float commandedHeartbeatTime)
     return returnVal;
 }
 
+/**
+ * @brief State machine to continue creating a heartbeat
+ * 
+ * continueHeartbeatVibe is called by timer to do the next step of the heartbeat
+ * (e.g. start S1, finish S2, etc) when the timer expires. This function will also 
+ * start the next heartbeat step and timer if there is more steps in the current heartbeat. 
+ * 
+ */
 bool continueHeartbeatVibe(void *opaque)
 {
     // HBstate contains the state we just finished
@@ -74,7 +88,7 @@ bool continueHeartbeatVibe(void *opaque)
         analogWrite(pwmPin_A, 0);
         analogWrite(pwmPin_B, 0);
 
-        tmr.in(BETWEEN_TIME, continueHeartbeatVibe);
+        timer.in(BETWEEN_TIME*thisHeartbeatTime, continueHeartbeatVibe);
 
         HBstate = between;
         break;
@@ -84,7 +98,7 @@ bool continueHeartbeatVibe(void *opaque)
         analogWrite(pwmPin_A, S2_AMPLITUDE);
         analogWrite(pwmPin_B, S2_AMPLITUDE);
 
-        tmr.in(S2_TIME, continueHeartbeatVibe);
+        timer.in(S2_TIME*thisHeartbeatTime, continueHeartbeatVibe);
 
         HBstate = s2;
         break;
@@ -94,7 +108,7 @@ bool continueHeartbeatVibe(void *opaque)
         analogWrite(pwmPin_A, 0);
         analogWrite(pwmPin_B, 0);
 
-        tmr.in(AFTER_TIME, continueHeartbeatVibe);
+        timer.in(AFTER_TIME*thisHeartbeatTime, continueHeartbeatVibe);
 
         HBstate = after;
 
@@ -120,14 +134,11 @@ bool continueHeartbeatVibe(void *opaque)
 
 bool checkIfBeating(void)
 {
-    if(HBstate == waiting)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return (HBstate != waiting);
+}
+
+void vibe_inLoop() {
+  timer.tick(); 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -145,9 +156,9 @@ void setPwmFrequency(int pin, int divisor) {
       default: return;
     }
     if (pin == 5 || pin == 6) {
-      TCCR0B = TCCR0B & 0b11111000 | mode;
+      TCCR0B = TCCR0B & (0b11111000 | mode);
     } else {
-      TCCR1B = TCCR1B & 0b11111000 | mode;
+      TCCR1B = TCCR1B & (0b11111000 | mode);
     }
   } else if (pin == 3 || pin == 11) {
     switch (divisor) {
@@ -160,6 +171,6 @@ void setPwmFrequency(int pin, int divisor) {
       case 1024: mode = 0x7; break;
       default: return;
     }
-    TCCR2B = TCCR2B & 0b11111000 | mode;
+    TCCR2B = TCCR2B & (0b11111000 | mode);
   }
 }

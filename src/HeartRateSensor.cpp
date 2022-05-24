@@ -22,7 +22,8 @@
 #define builtin_BeatDetect
 
 /**** Debug prints ***/
-#define PRINT_BPM_Data 
+// #define PRINT_BPM_Data 
+// #define PRINT_FingerWarning
 // #define PRINT_graph 
 
 
@@ -101,7 +102,10 @@ void HeartRateSensor_inLoop() {
     }
   #endif /* builtin_BeatDetect */
 
-  if (irValue < 50000)
-    Serial.println(" No finger?");
+  #ifdef PRINT_FingerWarning
+    if (irValue < 50000) {
+      Serial.println(" No finger?");
+    }
+  #endif /* PRINT_FingerWarning */
 
 }

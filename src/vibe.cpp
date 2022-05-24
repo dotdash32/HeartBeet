@@ -6,10 +6,10 @@
 
 // defines
 #define S1_AMPLITUDE 0.5 * 255.
-#define S2_AMPLITUDE 0.3 * 255.
-#define S1_TIME 0.25
-#define BETWEEN_TIME 0.25
-#define S2_TIME 0.1
+#define S2_AMPLITUDE 0.5 * 255.
+#define S1_TIME 0.15
+#define BETWEEN_TIME 0.15
+#define S2_TIME 0.09
 #define AFTER_TIME (1.0 - (S2_TIME + BETWEEN_TIME + S1_TIME))
 
 // private functions
@@ -42,12 +42,12 @@ bool setupVibeMotors(void)
     return true;  
 }
 
-bool startHeartbeatVibe(float commandedHeartbeatTime)
+bool startHeartbeatVibe(float commandedHeartrate)
 {
     bool returnVal = true; 
 
     // store timer object and heartbeattime in module for use with continueHeartbeatVibe later
-    thisHeartbeatTime = commandedHeartbeatTime;
+    thisHeartbeatTime = 60.0e3 / commandedHeartrate;
 
     // if not already sending a beat
     if((HBstate == waiting) || (HBstate == after))

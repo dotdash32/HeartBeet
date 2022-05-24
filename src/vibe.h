@@ -14,7 +14,7 @@ bool setupVibeMotors(void);
 //
 //    INPUTS: timer object created in main, thisHeartbeatTime indiciating how long the entire heartbeat should be in ms
 //    RETURNS: true if heartbeat started successfully, false otherwise
-bool startHeartbeatVibe(float thisHeartbeatTime);
+bool startHeartbeatVibe(float commandedHeartrate);
 
 
 

@@ -7,6 +7,9 @@
 // keep alive messages?
 #define KeepAliveMsgs
 
+// heart beet vibe test harness
+#define VibeTest
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -39,12 +42,21 @@ void loop() {
   #endif /* KeepAliveMsgs */
 
   // sample code for testing vibe.cpp
-  #if 1
-  if(checkIfBeating() == false) 
-  {
-    startHeartbeatVibe(1000);  // start a heartbeat that will last 1 sec (60 BPM)
-  }
-  #endif
+  #ifdef VibeTest
+    static float BPM_Des = 60.;
+    if (Serial.available()) {
+      String inputString = Serial.readStringUntil('\n');
+      float input = inputString.toFloat();
+      if (input <= 150 && input >= 30) {
+        // a normal heartrate!
+        BPM_Des = input; //input it out!
+      }
+    } 
+    if(checkIfBeating() == false) 
+    {
+      startHeartbeatVibe(BPM_Des);  // start a heartbeat that will last 1 sec (60 BPM)
+    }
+  #endif /* VibeTest */
 
   // feed watchdog!
   feedWatchdog();

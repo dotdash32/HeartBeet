@@ -22,9 +22,14 @@
 #define builtin_BeatDetect
 
 /**** Debug prints ***/
-// #define PRINT_BPM_Data 
+#define PRINT_BPM_Data 
 // #define PRINT_FingerWarning
 // #define PRINT_graph 
+
+// avoid locking up on startup
+#define DETECTION_BLOCKING
+#define MAX_NUMTRIES    1e3
+static uint16_t numtries = 0;
 
 
 static MAX30105 particleSensor;
@@ -37,16 +42,29 @@ static long lastBeat = 0; //Time at which the last beat occurred
 static float beatsPerMinute;
 static int beatAvg;
 
+static bool isFingerDetected = false; // do we have contact?
+
 // limit rate
 #define HRS_PrintPeriod    1 //[ms]
 static unsigned long lastHRSprint = 0;
+
+
+// function prototypes
+void resetBeatValues();
 
 void HeartRateSensor_setup(void) {
 
   // Initialize sensor
   while (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
     Serial.println("MAX30102 was not found. Please check wiring/power. ");
-    // while (1);
+    #ifndef DETECTION_BLOCKING
+      numtries++;
+      delay(1);
+      if (MAX_NUMTRIES < numtries) {
+        beatAvg = 60; // tell it to just leave
+        break;
+      }
+    #endif /* DETECTION_BLOCKING */
   }
 
   particleSensor.setup(); //Configure sensor with default settings
@@ -102,10 +120,34 @@ void HeartRateSensor_inLoop() {
     }
   #endif /* builtin_BeatDetect */
 
-  #ifdef PRINT_FingerWarning
-    if (irValue < 50000) {
+  if (irValue < 50000) {
+    isFingerDetected = false;
+    // reset values!
+    resetBeatValues();
+    #ifdef PRINT_FingerWarning
       Serial.println(" No finger?");
-    }
-  #endif /* PRINT_FingerWarning */
+    #endif /* PRINT_FingerWarning */
+  } else {
+    // finger is probably there?
+    isFingerDetected = true;
+  }
 
+}
+
+int getCurrentAvgBPM() {
+  return beatAvg;
+}
+
+bool fingerDetected() {
+  return isFingerDetected;
+}
+
+void resetBeatValues() {
+  // saved variables
+  beatsPerMinute = 0;
+  beatAvg = 0;
+  lastBeat = 0; // for time tracking
+  for (uint8_t i = 0; i < RATE_SIZE; i++) {
+    rates[i] = 0; // clear array
+  }
 }

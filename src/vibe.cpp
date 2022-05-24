@@ -12,6 +12,10 @@
 #define S2_TIME 0.09
 #define AFTER_TIME (1.0 - (S2_TIME + BETWEEN_TIME + S1_TIME))
 
+// input bounding 
+#define BPM_MAX         120 // max heartrate to display
+#define BPM_MIN         40 //min heartrates to consider
+
 // private functions
 void setPwmFrequency(int pin, int divisor);
 bool continueHeartbeatVibe(void *opaque);
@@ -23,7 +27,7 @@ enum HBstep_t {
   waiting, s1, between, s2, after
   };
 static HBstep_t HBstate = waiting;
-static float thisHeartbeatTime = 0; // [ms]
+static float thisHeartbeatTime = 0.0; // [ms] dfault to 60 bpm
 
 auto timer = timer_create_default();
 
@@ -47,25 +51,28 @@ bool startHeartbeatVibe(float commandedHeartrate)
     bool returnVal = true; 
 
     // store timer object and heartbeattime in module for use with continueHeartbeatVibe later
-    thisHeartbeatTime = 60.0e3 / commandedHeartrate;
+    if (commandedHeartrate <= BPM_MAX && commandedHeartrate >= BPM_MIN) {
+      thisHeartbeatTime = 60.0e3 / commandedHeartrate;
 
-    // if not already sending a beat
-    if((HBstate == waiting) || (HBstate == after))
-    {
-        // start the vibration motors
-        analogWrite(pwmPin_A, S1_AMPLITUDE);
-        analogWrite(pwmPin_B, S1_AMPLITUDE);
+      // if not already sending a beat
+      if((HBstate == waiting) || (HBstate == after))
+      {
+          // start the vibration motors
+          analogWrite(pwmPin_A, S1_AMPLITUDE);
+          analogWrite(pwmPin_B, S1_AMPLITUDE);
 
-        // start the timer
-        timer.in(BETWEEN_TIME*thisHeartbeatTime, continueHeartbeatVibe);
+          // start the timer
+          timer.in(BETWEEN_TIME*thisHeartbeatTime, continueHeartbeatVibe);
 
-        // set state to S1
-        HBstate = s1;
+          // set state to S1
+          HBstate = s1;
+      }
+      else    
+      {
+          returnVal = false; // indicate cannot start another heartbeat
+      }
     }
-    else    
-    {
-        returnVal = false; // indicate cannot start another heartbeat
-    }
+
 
     return returnVal;
 }

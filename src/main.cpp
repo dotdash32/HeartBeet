@@ -8,7 +8,7 @@
 #define KeepAliveMsgs
 
 // heart beet vibe test harness
-#define VibeTest
+// #define VibeTest
 
 
 void setup() {
@@ -55,6 +55,11 @@ void loop() {
     if(checkIfBeating() == false) 
     {
       startHeartbeatVibe(BPM_Des);  // start a heartbeat that will last 1 sec (60 BPM)
+    }
+  #else
+    if((checkIfBeating() == false) && fingerDetected()) 
+    {
+      startHeartbeatVibe(getCurrentAvgBPM());  // start a heartbeat that will last 1 sec (60 BPM)
     }
   #endif /* VibeTest */
 

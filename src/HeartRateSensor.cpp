@@ -55,7 +55,7 @@ void resetBeatValues();
 void HeartRateSensor_setup(void) {
 
   // Initialize sensor
-  while (!particleSensor.begin(Wire, I2C_SPEED_FAST)) {
+  while (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) {
     Serial.println("MAX30102 was not found. Please check wiring/power. ");
     #ifndef DETECTION_BLOCKING
       numtries++;

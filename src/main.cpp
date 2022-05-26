@@ -12,7 +12,7 @@
 
 // Accept keyboard input for modulating perceived heartrate
 #define RateModulation
-#define SCALER_RESOLUTION 0.25 // Determines step size for rate modulation scaler value
+#define SCALER_RESOLUTION 0.05 // Determines step size for rate modulation scaler value
 
 
 void setup() {
@@ -34,6 +34,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+  static float HRScale = 1; // Initialize scaler to 1 (i.e. match user's HR initially)
 
   // tick timer (used for vibe motors)
   vibe_inLoop();
@@ -47,7 +48,6 @@ void loop() {
 
   // Accept keyboard input "="/"-" for modulating scaled perceived heartrate
   #ifdef RateModulation
-    static float HRScale = 1; // Initialize scaler to 1 (i.e. match user's HR initially)
     if (Serial.available() > 0) {
       char inputChar = Serial.read();
       switch (inputChar) {
@@ -56,6 +56,7 @@ void loop() {
           HRScale += SCALER_RESOLUTION;
           Serial.print("HR Scaler increased to ");
           Serial.println(HRScale);
+          break;
         }
 
         // Decrease scaler if scaler will stay nonzero
@@ -66,12 +67,14 @@ void loop() {
             Serial.print("HR Scaler decreased to ");
             Serial.println(HRScale);
           }
+          break;
         }
 
         // Reset scaler to 1
         case ('0'): {
           HRScale = 1;
           Serial.println("HR Scaler reset to 1");
+          break;
         }
 
       }
@@ -96,7 +99,15 @@ void loop() {
   #else
     if((checkIfBeating() == false) && fingerDetected()) 
     {
-      startHeartbeatVibe(getCurrentAvgBPM());  // start a heartbeat that will last 1 sec (60 BPM)
+      int currAvgBPM = getCurrentAvgBPM();
+      
+      // start a heartbeat that will last 1 sec (60 BPM)
+      if (startHeartbeatVibe(HRScale * currAvgBPM)) {
+        Serial.print("Current HR: ");
+        Serial.print(currAvgBPM);
+        Serial.print("\tCommanded HR: ");
+        Serial.println(HRScale * currAvgBPM);
+      }
     }
   #endif /* VibeTest */
 

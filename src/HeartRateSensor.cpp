@@ -22,7 +22,7 @@
 #define builtin_BeatDetect
 
 /**** Debug prints ***/
-#define PRINT_BPM_Data 
+// #define PRINT_BPM_Data 
 // #define PRINT_FingerWarning
 // #define PRINT_graph 
 

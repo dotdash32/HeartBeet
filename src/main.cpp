@@ -10,6 +10,10 @@
 // heart beet vibe test harness
 // #define VibeTest
 
+// Accept keyboard input for modulating perceived heartrate
+#define RateModulation
+#define SCALER_RESOLUTION 0.25 // Determines step size for rate modulation scaler value
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -40,6 +44,39 @@ void loop() {
   #ifdef KeepAliveMsgs
     keepAliveMessages();
   #endif /* KeepAliveMsgs */
+
+  // Accept keyboard input "="/"-" for modulating scaled perceived heartrate
+  #ifdef RateModulation
+    static float HRScale = 1; // Initialize scaler to 1 (i.e. match user's HR initially)
+    if (Serial.available() > 0) {
+      char inputChar = Serial.read();
+      switch (inputChar) {
+        // Increase scaler
+        case ('='): {
+          HRScale += SCALER_RESOLUTION;
+          Serial.print("HR Scaler increased to ");
+          Serial.println(HRScale);
+        }
+
+        // Decrease scaler if scaler will stay nonzero
+        case ('-'): {
+          // Do not decrease if scaler will become 0
+          if (HRScale > SCALER_RESOLUTION) {
+            HRScale -= SCALER_RESOLUTION;
+            Serial.print("HR Scaler decreased to ");
+            Serial.println(HRScale);
+          }
+        }
+
+        // Reset scaler to 1
+        case ('0'): {
+          HRScale = 1;
+          Serial.println("HR Scaler reset to 1");
+        }
+
+      }
+    }
+  #endif
 
   // sample code for testing vibe.cpp
   #ifdef VibeTest

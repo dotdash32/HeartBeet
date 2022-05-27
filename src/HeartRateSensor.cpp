@@ -25,7 +25,7 @@
 // #define PRINT_BPM_Data 
 // #define PRINT_FingerWarning
 // #define PRINT_graph 
-// #define PRINT_HRV_debug
+#define PRINT_HRV_debug
 
 // avoid locking up on startup
 #define DETECTION_BLOCKING
@@ -42,7 +42,7 @@ static byte rateSpot = 0;
 static long lastBeat = 0; //Time at which the last beat occurred
 
 // track heart rate variability
-static const uint8_t NUM_HRV_SAMPLES = 10;
+static const uint8_t NUM_HRV_SAMPLES = 30;
 static const unsigned long MAX_HRV_INTERVAL = 200; // what's the biggest reasonable value?
 static uint8_t HRV_index = 0; // where in array to save
 static float RMSSD = 0.0; // HRV calcuation
@@ -57,7 +57,7 @@ static int beatAvg;
 static bool isFingerDetected = false; // do we have contact?
 
 // limit rate
-#define HRS_PrintPeriod    1 //[ms]
+#define HRS_PrintPeriod    500 //[ms]
 static unsigned long lastHRSprint = 0;
 
 
@@ -129,10 +129,11 @@ void HeartRateSensor_inLoop() {
           RMSSD = 0.0; //clear for each round
           for (int ind = 0; ind < NUM_HRV_SAMPLES; ind++) {
             // i+1 - i => (i+size-1) %size - i
-            RMSSD = (float) interval*interval; // square it as we enter
+            RMSSD += (float) HRintervals[ind] * HRintervals[ind]; // square it as we enter
           }
-          RMSSD = sqrt(RMSSD/NUM_HRV_SAMPLES); // calcute RMS part
+          RMSSD = sqrt(RMSSD/(NUM_HRV_SAMPLES-1)); // calcute RMS part
           #ifdef PRINT_HRV_debug
+            Serial.print("\t\t\t\t\tRMSSD: ");
             Serial.println(RMSSD);
           #endif /* PRINT_HRV_debug */
         }

@@ -48,7 +48,7 @@ bool setupVibeMotors(void)
 
 bool startHeartbeatVibe(float commandedHeartrate)
 {
-    bool returnVal = true; 
+    bool returnVal = false; 
 
     // store timer object and heartbeattime in module for use with continueHeartbeatVibe later
     if (commandedHeartrate <= BPM_MAX && commandedHeartrate >= BPM_MIN) {
@@ -66,13 +66,10 @@ bool startHeartbeatVibe(float commandedHeartrate)
 
           // set state to S1
           HBstate = s1;
-      }
-      else    
-      {
-          returnVal = false; // indicate cannot start another heartbeat
+          
+          returnVal = true;
       }
     }
-
 
     return returnVal;
 }

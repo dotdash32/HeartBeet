@@ -10,14 +10,14 @@
 // #define DEBUG_DUTY                // uncomment this to plot motor command waveform to serial plotter
  #define PRINT_WAVE_PARAMS         // uncomment this to print waveform parameters (amplitude and frequency)
 
-#define AMP_STEP 0.05   // step that we increase amplitude by to determine min perceptible thresh
-#define FREQ_STEP 1     // [hz], resolution of frequencies we will test. Might need to change this to a smaller number?
-#define MIN_AMP 0
+#define AMP_STEP 0.01   // step that we increase amplitude by to determine min perceptible thresh
+#define FREQ_STEP 0.125     // [hz], resolution of frequencies we will test. Might need to change this to a smaller number?
+#define MIN_AMP 0.15
 #define MAX_AMP 1
 #define MIN_FREQ 1
 
-double currentAmp = 0.0;            // ranges from 0 to 1
-double currentFreq = 1.;            // [hz]
+double currentAmp = MIN_AMP;            // ranges from 0 to 1
+double currentFreq = MIN_FREQ;            // [hz]
 unsigned long timeOfNextChange;     // for tracking when the wave should change state
 bool currentState;                  // false = low, true = high
 String command;                     // serial command in, one of '-', '=', '[', or ']'
@@ -27,7 +27,7 @@ int pwmPin_A = 3; // PWM output pin for motor 1
 int pwmPin_B = 5; // PWM output pin for motor 1
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // set motors to output
   pinMode(pwmPin_A, OUTPUT);  
@@ -60,12 +60,12 @@ void loop() {
         }
         else if(command.equals("[") && (currentFreq - FREQ_STEP >= MIN_FREQ))
         {
-            currentFreq -= FREQ_STEP;
-            currentAmp = 0.; // reset amplitude back to 0 for the start of a new test
+            currentFreq /= pow(10,FREQ_STEP);
+            currentAmp = MIN_AMP; // reset amplitude back to 0 for the start of a new test
         }
         else if(command.equals("]")){
-            currentFreq += FREQ_STEP; 
-            currentAmp = 0.; // reset amplitude back to 0 for the start of a new test
+            currentFreq *= pow(10,FREQ_STEP); 
+            currentAmp = MIN_AMP; // reset amplitude back to 0 for the start of a new test
         }
         else
         {
@@ -82,13 +82,14 @@ void loop() {
   }
 
   // change wave from hi to low or low to hi if enough time has passed
-  static unsigned long currentTime = millis();
+  static unsigned long currentTime = 0;
+  currentTime = millis();
   if(currentTime >= timeOfNextChange) // if it's time to change state
   {
     // write new commands to motor
     if(currentState == 0) // if motors were off, turn them on
     {
-      duty = 255 * currentAmp;
+      duty = 255. * currentAmp;
     }
     else // if motors were on, turn them off
     {
@@ -105,7 +106,13 @@ void loop() {
   #ifdef DEBUG_DUTY
     if(currentTime%20 == 0) // every 20 ms print duty (or some other variable) to screen 
     {
-      Serial.println(duty);
+//      Serial.println(currentState);
+        Serial.print("current/next: ");
+        Serial.print(currentTime);
+        Serial.print("/");
+        Serial.print(timeOfNextChange); /////////////////
+
+        Serial.println();
     }
   #endif
 

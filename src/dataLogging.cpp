@@ -3,8 +3,7 @@
  * Description: Module for logging HRV data as subject-specific CSV file on a microSD card.
  */
 #include "dataLogging.h"
-#include <SPI.h>
-#include <SD.h>
+#include <Arduino.h>
 
 #define SD_CS_PIN 4 // chip-select line for SD card - pin 4
 
@@ -192,7 +191,7 @@ String formatFilename(int id) {
   String idStr = String(id);
   String filename = "";
   
-  for (int i=0; i < (8 - idStr.length()); i++) {
+  for (uint8_t i=0; i < (8 - idStr.length()); i++) {
     filename += "0";
   }
   filename += idStr;

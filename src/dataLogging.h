@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include <SPI.h>
+#include <SD.h>
+
 // Logging
 bool startLogging(void);
 bool stopLogging(void);

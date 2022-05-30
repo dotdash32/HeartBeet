@@ -146,7 +146,7 @@ void loop() {
     }
   }
 
-  #if 0 /////////////////////// FOR TESTING SD_CARD DATA LOGGING
+  #if 1 /////////////////////// FOR TESTING SD_CARD DATA LOGGING
   static float HRScale = 1; // Initialize scaler to 1 (i.e. match user's HR initially)
 
   // tick timer (used for vibe motors)

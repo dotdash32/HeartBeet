@@ -13,6 +13,7 @@
  */
 
 #include "HeartRateSensor.h"
+#include "dataLogging.h"
 
 #include <Wire.h>
 #include "MAX30105.h"
@@ -136,6 +137,10 @@ void HeartRateSensor_inLoop() {
             Serial.print("\t\t\t\t\tRMSSD: ");
             Serial.println(RMSSD);
           #endif /* PRINT_HRV_debug */
+          // Log HRV value
+          if (isLogging()) {
+            logData(millis(), RMSSD);
+          }
         }
 
       }

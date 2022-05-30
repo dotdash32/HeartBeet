@@ -21,7 +21,7 @@ void setPwmFrequency(int pin, int divisor);
 bool continueHeartbeatVibe(void *opaque);
 
 // module level variables
-static int pwmPin_A = 3; // PWM output pin for motor 1
+static int pwmPin_A = 6; // PWM output pin for motor 1
 static int pwmPin_B = 5; // PWM output pin for motor 2
 enum HBstep_t {
   waiting, s1, between, s2, after

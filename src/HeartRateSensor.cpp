@@ -101,7 +101,7 @@ void HeartRateSensor_inLoop() {
       //We sensed a beat!
       long delta = millis() - lastBeat;
       lastBeat = millis();
-      Serial.println("Got a heartbeat!");
+      // Serial.println("Got a heartbeat!");
 
       beatsPerMinute = 60 / (delta / 1000.0);
 

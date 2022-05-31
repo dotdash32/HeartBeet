@@ -18,3 +18,4 @@ void HeartRateSensor_inLoop(void);
 // getters/setters
 int getCurrentAvgBPM();
 bool fingerDetected();
+int getCurrentHRV();

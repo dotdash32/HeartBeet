@@ -8,7 +8,7 @@
 // #define KeepAliveMsgs
 
 // Print BPM?
-// #define PRINT_HR
+#define PRINT_HR
 
 // heart beet vibe test harness
 // #define VibeTest
@@ -109,8 +109,13 @@ void loop() {
         #ifdef PRINT_HR
           Serial.print("Current HR: ");
           Serial.print(currAvgBPM);
-          Serial.print("\tCommanded HR: ");
-          Serial.println(HRScale * currAvgBPM);
+          Serial.print(" [BPM]\tCommanded HR: ");
+          Serial.print(HRScale * currAvgBPM, 1);
+          Serial.print(" [BPM]\t\tHRV: ");
+          Serial.print(getCurrentHRV());
+          Serial.print(" [ms]");
+
+          Serial.println();
         #endif
       }
     }

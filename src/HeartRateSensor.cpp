@@ -25,7 +25,8 @@
 // #define PRINT_BPM_Data 
 // #define PRINT_FingerWarning
 // #define PRINT_graph 
-#define PRINT_HRV_debug
+// #define PRINT_HRV_debug
+// #define TERM_LOGGING
 
 // avoid locking up on startup
 #define DETECTION_BLOCKING
@@ -100,7 +101,7 @@ void HeartRateSensor_inLoop() {
       //We sensed a beat!
       long delta = millis() - lastBeat;
       lastBeat = millis();
-      Serial.println("Got a heartbeat!");
+      // Serial.println("Got a heartbeat!");
 
       beatsPerMinute = 60 / (delta / 1000.0);
 
@@ -137,6 +138,14 @@ void HeartRateSensor_inLoop() {
             Serial.println(RMSSD);
           #endif /* PRINT_HRV_debug */
         }
+
+        #ifdef TERM_LOGGING
+          Serial.print(millis());
+          Serial.print(",");
+          Serial.print(beatsPerMinute);
+          Serial.print(",");
+          Serial.println(interval);
+        #endif
 
       }
     }
@@ -175,6 +184,10 @@ void HeartRateSensor_inLoop() {
 
 int getCurrentAvgBPM() {
   return beatAvg;
+}
+
+int getCurrentHRV() {
+  return (int) RMSSD;
 }
 
 bool fingerDetected() {

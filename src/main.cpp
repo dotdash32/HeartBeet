@@ -5,7 +5,10 @@
 #include "vibe.h"
 
 // keep alive messages?
-#define KeepAliveMsgs
+// #define KeepAliveMsgs
+
+// Print BPM?
+#define PRINT_HR
 
 // heart beet vibe test harness
 // #define VibeTest
@@ -103,10 +106,17 @@ void loop() {
       
       // start a heartbeat that will last 1 sec (60 BPM)
       if (startHeartbeatVibe(HRScale * currAvgBPM)) {
-        Serial.print("Current HR: ");
-        Serial.print(currAvgBPM);
-        Serial.print("\tCommanded HR: ");
-        Serial.println(HRScale * currAvgBPM);
+        #ifdef PRINT_HR
+          Serial.print("Current HR: ");
+          Serial.print(currAvgBPM);
+          Serial.print(" [BPM]\tCommanded HR: ");
+          Serial.print(HRScale * currAvgBPM, 1);
+          Serial.print(" [BPM]\t\tHRV: ");
+          Serial.print(getCurrentHRV());
+          Serial.print(" [ms]");
+
+          Serial.println();
+        #endif
       }
     }
   #endif /* VibeTest */
